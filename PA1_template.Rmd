@@ -1,20 +1,103 @@
-# Reproducible Research: Peer Assessment 1
+Title: Moh hassan
+========================================================
+
+# Reproducible Research 
+# Project 1
+# Getting data from the web
+
+# Set working dir - optional
+
+```{r echo=FALSE}
+setwd('~/RMIT15.071x/RS') 
+```
+
+```{r dataLoad}
+# Download the dataset into workspace (wd), if it is not avalaible in local 
+fileUrl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
+fileZip <- "dataset.zip"
+if (!file.exists(fileZip)) download.file(fileUrl, fileZip, method = "auto")
+# unzip the dataset into wd - dir 
+if(file.exists(fileZip)){unzip(fileZip, exdir="./data")}
+# variable that specifies the data path
+
+# Read file
+  activity <- read.csv("./data/activity.csv")
+```
+
+  # What is mean total number of steps taken per day?
+  # For this part of the assignment, you can ignore the missing values in the dataset.
+  # 1. Make a histogram of the total number of steps taken each day
+  #activity$steps[is.na(activity$steps)] <- 0
+  # or 
+  #sum(activity$steps, igonre.na = TRUE)
+  # aggreate by date
+  
+ 
+```{r}
+ df <- aggregate( steps~ date, data=activity, FUN=sum)
+  hist(df$steps, xlab='steps per day', main='Histogram of Steps per day for 2 months',     breaks=10)
+  mean(df$steps)
+  median(df$steps)
+```
+
+# What is the average daily activity pattern?
+# 1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) 
+# and the average number of steps taken, averaged across all days (y-axis)
+```{r}
+  avg_daily <- aggregate( .~ interval, data=activity, FUN=sum) 
+  plot(avg_daily$interval, avg_daily$steps,xlab="5 min interval", ylab="log(steps)", type="l")
+```
+
+# 2. Which 5-minute interval, on average across all the days in the dataset, 
+#    contains the maximum number of steps?
+```{r}
+ avg_daily[avg_daily$steps==max(avg_daily$steps),]
+```
 
 
-## Loading and preprocessing the data
+# Imputing missing values
+# 1. Calculate and report the total number of missing values in the dataset 
+# (i.e. the total number of rows with NAs)
+```{r}
+  colSums(is.na(activity))
+  sapply(activity, function(x) sum(is.na(x)))
+```
 
 
 
-## What is mean total number of steps taken per day?
+```{r}
+activity.complete <- activity
+  # replace all steps with NA's with the mnean of steps (37,8)
+  activity.complete$steps[is.na(activity.complete$steps)] <- mean(activity$steps, na.rm=TRUE)/2
+  
+  # Sum the number of steps per day over 2 months
+  # 3. complete data 
+  df.complete <- aggregate( steps~ date, data=activity.complete, FUN=sum)
+  # 4 histogram 
+  hist(df.complete$steps, xlab='steps per day', main='Histogram of Steps per day for 2 months', breaks=10)
+  
+  mean(df.complete$steps)
+  median(df.complete$steps)
+  #  Mean and media have higher value when replacing missing steps values
+  #  with  avg steps / 2 to normalize steps data.
+  # The impact results in having skewed data for missing values on a given date.
+  
+  # ---------------------------------------------------------------------------
+  # Weekdays and Weekends differences
+  # 1. Create a new factor variable for weekday and weekend
 
+  df.complete.wd  <- aggregate( .~ interval, data=activity.complete, FUN=sum) 
+  df.complete.wd$weekday <- weekdays(as.Date(df.complete.wd$date)) 
+  
+  weekend <- c('Saturday','Sunday')
+  df.complete.weekend <- df.complete.wd[df.complete.wd$weekday %in% weekend,]
+  
+  # panel plot
+  par(mfrow = c(2,1)) # 2 rows and 1 column
+  
 
+  plot(df.complete.wd$interval, df.complete.wd$steps,xlab="5 min interval", ylab="log(steps)", type="l")
+  plot(avg_daily$interval, avg_daily$steps,xlab="5 min interval", ylab="log(steps)", type="l")
 
-## What is the average daily activity pattern?
+```
 
-
-
-## Imputing missing values
-
-
-
-## Are there differences in activity patterns between weekdays and weekends?
